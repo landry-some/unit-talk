@@ -29,7 +29,7 @@ abbreviations, full names and plurals all work (`ft`, `foot`, `feet`).
 ## Install
 
 ```bash
-git clone https://github.com/<your-account>/unit-talk.git
+git clone https://github.com/landry-some/unit-talk.git
 cd unit-talk
 pipx install .        # or: python3 -m pip install --user .
 ```

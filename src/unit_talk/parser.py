@@ -50,14 +50,127 @@ def tokenize(text: str) -> list[str]:
     return [t for t in _TOKEN_RE.findall(text) if t not in _IGNORED]
 
 
-def parse_amount(tokens: list[str], i: int) -> tuple[Fraction | None, int]:
-    """Read an amount starting at ``tokens[i]``; return (None, i) if there isn't one."""
-    if i < len(tokens) and _NUMBER_RE.fullmatch(tokens[i]):
-        try:
-            return Fraction(tokens[i].replace(",", "")), i + 1
-        except ZeroDivisionError:
-            raise ParseError(f"can't divide by zero in '{tokens[i]}'") from None
+_SMALL = {
+    w: n
+    for n, w in enumerate(
+        "zero one two three four five six seven eight nine ten eleven twelve thirteen "
+        "fourteen fifteen sixteen seventeen eighteen nineteen".split()
+    )
+}
+_TENS = {
+    w: 10 * n
+    for n, w in enumerate("twenty thirty forty fifty sixty seventy eighty ninety".split(), 2)
+}
+_SCALES = {"hundred": 100, "thousand": 1000}
+_DENOMINATORS = {
+    "half": 2, "halves": 2, "third": 3, "thirds": 3, "quarter": 4, "quarters": 4,
+    "fourth": 4, "fourths": 4, "fifth": 5, "fifths": 5, "sixth": 6, "sixths": 6,
+    "eighth": 8, "eighths": 8,
+}
+_NEGATIVES = {"minus", "negative"}
+
+
+def _lower(tokens: list[str], i: int) -> str:
+    return tokens[i].lower() if i < len(tokens) else ""
+
+
+def _parse_digits(tokens: list[str], i: int) -> tuple[Fraction | None, int]:
+    """10, 2.5, 1/3, 1,000, and mixed numbers like ``1 1/2``."""
+    if not _NUMBER_RE.fullmatch(_lower(tokens, i)):
+        return None, i
+    try:
+        value = Fraction(tokens[i].replace(",", ""))
+        i += 1
+        nxt = _lower(tokens, i)
+        if value.denominator == 1 and value >= 0 and "/" in nxt and _NUMBER_RE.fullmatch(nxt):
+            fraction = Fraction(nxt)
+            if 0 < fraction < 1:
+                value += fraction
+                i += 1
+    except ZeroDivisionError:
+        raise ParseError(f"can't divide by zero in '{tokens[i]}'") from None
+    return value, i
+
+
+def _parse_words(tokens: list[str], i: int) -> tuple[Fraction | None, int]:
+    """Cardinal words: "a", "seven", "twenty-five", "two hundred and ten"."""
+    total = current = 0
+    start = i
+    if _lower(tokens, i) in ("a", "an"):
+        current = 1
+        i += 1
+    while i < len(tokens):
+        word = _lower(tokens, i)
+        if word in _SMALL:
+            current += _SMALL[word]
+        elif word in _TENS:
+            current += _TENS[word]
+            if _lower(tokens, i + 1) == "-" and _SMALL.get(_lower(tokens, i + 2), 0) in range(1, 10):
+                current += _SMALL[_lower(tokens, i + 2)]
+                i += 2
+        elif word in _SCALES:
+            if word == "thousand":
+                total += max(current, 1) * 1000
+                current = 0
+            else:
+                current = max(current, 1) * 100
+        elif (
+            word == "and"
+            and i > start
+            and _lower(tokens, i - 1) in _SCALES
+            and (_lower(tokens, i + 1) in _SMALL or _lower(tokens, i + 1) in _TENS)
+        ):
+            pass  # "one hundred and five"
+        else:
+            break
+        i += 1
+    if i == start:
+        return None, i
+    return Fraction(total + current), i
+
+
+def _parse_and_fraction(tokens: list[str], i: int) -> tuple[Fraction | None, int]:
+    """'and a half', 'and one quarter' -> (1/2, next index)."""
+    if _lower(tokens, i) == "and" and _lower(tokens, i + 1) in ("a", "an", "one"):
+        den = _DENOMINATORS.get(_lower(tokens, i + 2))
+        if den:
+            return Fraction(1, den), i + 3
     return None, i
+
+
+def parse_amount(tokens: list[str], i: int) -> tuple[Fraction | None, int]:
+    """Read an amount starting at ``tokens[i]``; return (None, i) if there isn't one.
+
+    Handles digits ("2.5", "1/3", "1 1/2"), words ("two", "a", "twenty-five"),
+    fractions ("half", "a quarter", "three quarters"), "two and a half", and the
+    filler in "half a cup" or "a third of a cup".
+    """
+    start = i
+    sign = 1
+    if _lower(tokens, i) in _NEGATIVES:
+        sign = -1
+        i += 1
+
+    value, i = _parse_digits(tokens, i)
+    if value is None:
+        value, i = _parse_words(tokens, i)
+
+    den = _DENOMINATORS.get(_lower(tokens, i))
+    if den:
+        value = (value if value is not None else 1) / den
+        i += 1
+    if value is None:
+        return None, start
+
+    extra, i = _parse_and_fraction(tokens, i)
+    if extra is not None:
+        value += extra
+
+    if _lower(tokens, i) == "of":
+        i += 1
+    if den and _lower(tokens, i) in ("a", "an"):
+        i += 1
+    return sign * value, i
 
 
 def _parse_unit(tokens: list[str], i: int) -> tuple[Unit, int]:
@@ -78,6 +191,8 @@ def _parse_quantity(tokens: list[str]) -> list[tuple[Fraction, Unit]]:
     parts: list[tuple[Fraction, Unit]] = []
     i = 0
     while i < len(tokens):
+        if parts and _lower(tokens, i) == "and":
+            i += 1  # "5 feet and 11 inches"
         amount, i = parse_amount(tokens, i)
         if amount is None:
             if parts:
@@ -85,6 +200,9 @@ def _parse_quantity(tokens: list[str]) -> list[tuple[Fraction, Unit]]:
             amount = Fraction(1)  # "how many feet in mile"
         unit, i = _parse_unit(tokens, i)
         parts.append((amount, unit))
+        extra, i = _parse_and_fraction(tokens, i)
+        if extra is not None:
+            parts.append((extra, unit))  # "a cup and a half"
 
     first = parts[0][1]
     for _, unit in parts[1:]:

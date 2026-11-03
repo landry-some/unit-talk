@@ -24,3 +24,6 @@ htmlcov/
 *.swp
 *~
 .DS_Store
+
+# Local notes for the CC-CLI submission form
+SUBMISSION.md

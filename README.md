@@ -40,10 +40,15 @@ pipx install .        # or: python3 -m pip install --user .
 unit-talk "350 F to C"
 unit-talk --precision 2 "2 liters in cups"
 unit-talk             # interactive prompt; Ctrl-D to quit
+printf '1 mi to km\n2 cups to ml\n' | unit-talk   # one query per line
+python3 -m unit_talk "1 mi to km"                # without installing the script
 ```
 
-Exit codes: `0` success, `1` the query couldn't be understood or converted, `2` bad
-command-line usage.
+Queries can use digits (`2.5`, `1/3`, `1 1/2`), words (`two`, `a quarter`,
+`two and a half`) and compound amounts (`5 ft 11 in`, `an hour and a half`).
+
+Exit codes: `0` success, `1` a query couldn't be understood or converted (for piped
+input: at least one line failed), `2` bad command-line usage.
 
 ## Test
 

@@ -15,8 +15,12 @@ from unit_talk.cli import format_value, main
         (Fraction(4), 4, "4"),
         (Fraction(2, 3), 2, "0.67"),
         (Fraction(5, 2), 0, "3"),
-        (Fraction(-1, 100000), 4, "0"),
+        (Fraction(-1, 100000), 4, "-1e-5"),
+        (Fraction(0), 4, "0"),
+        (Fraction(-1, 1000000), 4, "-1e-6"),
+        (Fraction(123456, 10**12), 2, "1.23e-7"),
         (Fraction(10) ** 25, 4, "10000000000000000000000000"),
+        (Fraction(10) ** 100, 4, "1" + "0" * 100),
     ],
 )
 def test_format_value(value, precision, expected):
@@ -92,3 +96,8 @@ def test_json_lines_from_stdin(monkeypatch, capsys):
     lines = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
     assert [r.get("text") for r in lines] == ["12 in", None]
     assert "error" in lines[1]
+
+
+def test_tiny_result_is_not_shown_as_zero(capsys):
+    assert main(["1 mm to km"]) == 0
+    assert capsys.readouterr().out == "1e-6 km\n"

@@ -39,6 +39,38 @@ def test_simple_queries(text, value, symbol):
     assert answer(text) == (value, symbol)
 
 
+@pytest.mark.parametrize(
+    "text, value, symbol",
+    [
+        ("1e3 m to km", 1, "km"),
+        ("1.5E-3 km to m", Fraction("1.5"), "m"),
+        ("2.5e+2 cm to m", Fraction("2.5"), "m"),
+        (".5e1 m to cm", 500, "cm"),
+        ("6.02e23 g to kg", Fraction("6.02e20"), "kg"),
+        ("2,5 kg to g", 2500, "g"),
+        ("0,75 l to ml", 750, "ml"),
+        ("12,3456 m to cm", Fraction("1234.56"), "cm"),
+        ("1,500 m to km", Fraction("1.5"), "km"),
+        ("12,345.5 m to km", Fraction("12.3455"), "km"),
+        ("\u221240 F to C", -40, "°C"),
+        ("-273.15 C to K", 0, "K"),
+    ],
+)
+def test_number_formats(text, value, symbol):
+    assert answer(text) == (value, symbol)
+
+
+def test_tokenize_number_formats():
+    assert tokenize("1.5e-3km") == ["1.5e-3", "km"]
+    assert tokenize("2,5 kg, 1,000 g") == ["2,5", "kg", "1,000", "g"]
+
+
+@pytest.mark.parametrize("text", ["-500 C to K", "-1 K to F", "-460 F in C"])
+def test_below_absolute_zero(text):
+    with pytest.raises(UnitError, match="below absolute zero"):
+        evaluate(parse(text))
+
+
 def test_inch_unit_next_to_in_separator():
     assert answer("10 in in cm") == (Fraction("25.4"), "cm")
     assert answer("12 in to ft") == (1, "ft")

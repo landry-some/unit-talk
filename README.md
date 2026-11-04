@@ -52,8 +52,12 @@ $ unit-talk --json "10 km to miles"
 {"query": "10 km to miles", "value": 6.2137, "unit": "mi", "text": "6.2137 mi"}
 ```
 
-Queries can use digits (`2.5`, `1/3`, `1 1/2`), words (`two`, `a quarter`,
-`two and a half`) and compound amounts (`5 ft 11 in`, `an hour and a half`).
+Queries can use digits (`2.5`, `1/3`, `1 1/2`, `1.5e-3`), words (`two`, `a quarter`,
+`two and a half`) and compound amounts (`5 ft 11 in`, `an hour and a half`). A comma
+is a decimal comma (`2,5 kg`) unless it separates groups of three digits (`1,500 m` is
+fifteen hundred). Results too small for the chosen precision are shown in scientific
+notation (`1 mm to km` gives `1e-6 km`), and temperatures below absolute zero are
+rejected.
 
 A misspelled unit gets a suggestion: `unit-talk "10 kilometrs to mi"` reports
 `unknown unit 'kilometrs'; did you mean 'kilometres'?`.

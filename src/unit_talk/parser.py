@@ -19,15 +19,17 @@ from .units import Unit, UnitError
 _TOKEN_RE = re.compile(
     r"""
     ->
-    | -?\d{1,3}(?:,\d{3})+(?:\.\d+)?   # 1,000 or 12,345.6
-    | -?\d+(?:\.\d+)?(?:/\d+)?          # 10, 2.5, 1/3
-    | -?\.\d+                           # .5
-    | [A-Za-z°³][A-Za-z°³/0-9'’]*       # words and symbols: km, °C, km/h, m3, what's
-    | \S                                # anything else, one character
+    | -?\d{1,3}(?:,\d{3})+(?:\.\d+)?(?!,?\d)  # 1,000 or 12,345.6
+    | -?\d+,\d+                              # decimal comma: 2,5
+    | -?\d+(?:\.\d+)?(?:[eE][-+]?\d+|/\d+)?   # 10, 2.5, 1/3, 1.5e-3
+    | -?\.\d+(?:[eE][-+]?\d+)?                # .5, .5e3
+    | [A-Za-z°³][A-Za-z°³/0-9'’]*            # words and symbols: km, °C, km/h, m3, what's
+    | \S                                     # anything else, one character
     """,
     re.VERBOSE,
 )
-_NUMBER_RE = re.compile(r"-?(?:\d[\d,]*(?:\.\d+)?(?:/\d+)?|\.\d+)")
+_NUMBER_RE = re.compile(r"-?(?:\d[\d,]*(?:\.\d+)?(?:[eE][-+]?\d+|/\d+)?|\.\d+(?:[eE][-+]?\d+)?)")
+_THOUSANDS_RE = re.compile(r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?")
 _IGNORED = {"?", "!", ".", ","}
 _SEPARATORS = {"to", "in", "into", "as", "->", "="}
 _PREFIXES = [
@@ -47,7 +49,15 @@ class Query:
 
 
 def tokenize(text: str) -> list[str]:
+    text = text.replace("\u2212", "-")  # Unicode minus sign
     return [t for t in _TOKEN_RE.findall(text) if t not in _IGNORED]
+
+
+def _number(token: str) -> Fraction:
+    """Read a numeric token; a comma is a thousands separator only in groups of three."""
+    if _THOUSANDS_RE.fullmatch(token):
+        return Fraction(token.replace(",", ""))
+    return Fraction(token.replace(",", "."))
 
 
 _SMALL = {
@@ -79,7 +89,7 @@ def _parse_digits(tokens: list[str], i: int) -> tuple[Fraction | None, int]:
     if not _NUMBER_RE.fullmatch(_lower(tokens, i)):
         return None, i
     try:
-        value = Fraction(tokens[i].replace(",", ""))
+        value = _number(tokens[i])
         i += 1
         nxt = _lower(tokens, i)
         if value.denominator == 1 and value >= 0 and "/" in nxt and _NUMBER_RE.fullmatch(nxt):

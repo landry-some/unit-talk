@@ -145,4 +145,7 @@ def get(name: str) -> Unit:
 def convert(value: Fraction, source: Unit, target: Unit) -> Fraction:
     if source.dimension != target.dimension:
         raise UnitError(f"can't convert {source.dimension} to {target.dimension}")
-    return target.from_base(source.to_base(value))
+    base = source.to_base(value)
+    if source.dimension == "temperature" and base < 0:
+        raise UnitError(f"{float(value):g} {source.symbol} is below absolute zero")
+    return target.from_base(base)

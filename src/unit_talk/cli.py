@@ -11,15 +11,25 @@ from .parser import ParseError, evaluate, parse
 from .units import UnitError
 
 
+def _trim(text: str) -> str:
+    return text.rstrip("0").rstrip(".") if "." in text else text
+
+
 def format_value(value: Fraction, precision: int) -> str:
-    """Round to at most ``precision`` decimal places and drop trailing zeros."""
+    """Round to at most ``precision`` decimal places and drop trailing zeros.
+
+    A non-zero value too small to show at that precision is written in scientific
+    notation (``1e-6``) rather than as a misleading ``0``.
+    """
     with localcontext() as ctx:
-        ctx.prec = 60
+        # Enough digits for the whole integer part plus the decimals.
+        ctx.prec = len(str(abs(value.numerator) // value.denominator)) + precision + 30
         exact = Decimal(value.numerator) / Decimal(value.denominator)
         rounded = exact.quantize(Decimal(1).scaleb(-precision), rounding=ROUND_HALF_UP)
-    text = f"{rounded:f}"
-    if "." in text:
-        text = text.rstrip("0").rstrip(".")
+    if rounded == 0 and value != 0:
+        mantissa, exponent = f"{exact:.{max(precision, 1)}e}".split("e")
+        return f"{_trim(mantissa)}e{int(exponent)}"
+    text = _trim(f"{rounded:f}")
     return "0" if text == "-0" else text
 
 

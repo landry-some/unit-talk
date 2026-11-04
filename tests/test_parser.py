@@ -71,6 +71,20 @@ def test_below_absolute_zero(text):
         evaluate(parse(text))
 
 
+@pytest.mark.parametrize(
+    "text, value, symbol",
+    [
+        ("how many square feet in an acre", 43560, "ft2"),
+        ("100 sq in in cm²", Fraction("645.16"), "cm2"),
+        ("1 GiB to MiB", 1024, "MiB"),
+        ("2 kilowatt hours to kJ", 7200, "kJ"),
+        ("760 mmHg to Pa", Fraction("101325.01443540"), "Pa"),
+    ],
+)
+def test_area_data_pressure_energy_queries(text, value, symbol):
+    assert answer(text) == (value, symbol)
+
+
 def test_inch_unit_next_to_in_separator():
     assert answer("10 in in cm") == (Fraction("25.4"), "cm")
     assert answer("12 in to ft") == (1, "ft")

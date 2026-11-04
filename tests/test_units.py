@@ -100,3 +100,40 @@ def test_suggest_nothing_when_far_off(name):
 def test_unknown_unit_error_includes_suggestion():
     with pytest.raises(UnitError, match=r"unknown unit 'milez'; did you mean 'mile'\?"):
         get("milez")
+
+
+@pytest.mark.parametrize(
+    "value, source, target, expected",
+    [
+        (1, "ac", "ft2", 43560),
+        (1, "ha", "m2", 10000),
+        (1, "mi2", "ac", 640),
+        (1, "sq ft", "square inches", 144),
+        (1, "km²", "ha", 100),
+        (1, "B", "bit", 8),
+        (1, "KiB", "B", 1024),
+        (1, "GB", "MB", 1000),
+        (1, "TiB", "GiB", 1024),
+        (1, "bar", "kPa", 100),
+        (1, "atm", "torr", 760),
+        (1, "hPa", "mbar", 1),
+        (1, "kWh", "MJ", Fraction("3.6")),
+        (1, "kcal", "cal", 1000),
+        (1, "Cal", "kJ", Fraction("4.184")),
+        (1, "Wh", "J", 3600),
+    ],
+)
+def test_new_category_conversions(value, source, target, expected):
+    assert conv(value, source, target) == expected
+
+
+def test_psi_and_btu():
+    assert float(conv(1, "psi", "Pa")) == pytest.approx(6894.757293168)
+    assert float(conv(1, "atm", "psi")) == pytest.approx(14.69594878)
+    assert float(conv(1, "BTU", "kJ")) == pytest.approx(1.05505585262)
+    assert float(conv(1, "eV", "J")) == pytest.approx(1.602176634e-19)
+
+
+def test_cal_case_matters():
+    assert get("cal").symbol == "cal"
+    assert get("Cal").symbol == "kcal"

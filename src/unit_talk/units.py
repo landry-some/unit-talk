@@ -101,6 +101,68 @@ _add("mph", "speed", Fraction(1609344, 3600000), "mile per hour", "miles per hou
 _add("ft/s", "speed", "0.3048", "fps", "foot per second", "feet per second")
 _add("kn", "speed", Fraction(1852, 3600), "knot", "knots")
 
+# Area (base: square metre)
+def _area_aliases(symbol, *names):
+    """m2 -> m², sq m, square meter(s)... for each long name given."""
+    short = symbol[:-1]
+    aliases = [f"{short}²", f"sq {short}"]
+    for name in names:
+        aliases += [f"square {name}", f"sq {name}"]
+    return aliases
+
+
+_add("mm2", "area", "0.000001", *_area_aliases("mm2", "millimeter", "millimeters",
+                                                "millimetre", "millimetres"))
+_add("cm2", "area", "0.0001", *_area_aliases("cm2", "centimeter", "centimeters",
+                                              "centimetre", "centimetres"))
+_add("m2", "area", 1, *_area_aliases("m2", "meter", "meters", "metre", "metres"))
+_add("km2", "area", 1000000, *_area_aliases("km2", "kilometer", "kilometers",
+                                             "kilometre", "kilometres"))
+_add("ha", "area", 10000, "hectare", "hectares")
+_add("in2", "area", "0.00064516", *_area_aliases("in2", "inch", "inches"))
+_add("ft2", "area", "0.09290304", *_area_aliases("ft2", "foot", "feet"))
+_add("yd2", "area", "0.83612736", *_area_aliases("yd2", "yard", "yards"))
+_add("ac", "area", "4046.8564224", "acre", "acres")
+_add("mi2", "area", "2589988.110336", *_area_aliases("mi2", "mile", "miles"))
+
+# Data size (base: byte). kB, MB... are powers of 1000; KiB, MiB... powers of 1024.
+_add("bit", "data", Fraction(1, 8), "bits")
+_add("B", "data", 1, "byte", "bytes")
+_add("kB", "data", 1000, "KB", "kilobyte", "kilobytes")
+_add("MB", "data", 1000**2, "megabyte", "megabytes")
+_add("GB", "data", 1000**3, "gigabyte", "gigabytes")
+_add("TB", "data", 1000**4, "terabyte", "terabytes")
+_add("KiB", "data", 1024, "kibibyte", "kibibytes")
+_add("MiB", "data", 1024**2, "mebibyte", "mebibytes")
+_add("GiB", "data", 1024**3, "gibibyte", "gibibytes")
+_add("TiB", "data", 1024**4, "tebibyte", "tebibytes")
+
+# Pressure (base: pascal)
+_add("Pa", "pressure", 1, "pascal", "pascals")
+_add("hPa", "pressure", 100, "hectopascal", "hectopascals")
+_add("kPa", "pressure", 1000, "kilopascal", "kilopascals")
+_add("MPa", "pressure", 1000000, "megapascal", "megapascals")
+_add("mbar", "pressure", 100, "millibar", "millibars")
+_add("bar", "pressure", 100000, "bars")
+_add("atm", "pressure", 101325, "atmosphere", "atmospheres")
+# Pound-force per square inch: 1 lb * standard gravity / (1 in)².
+_add("psi", "pressure", Fraction("0.45359237") * Fraction("9.80665") / Fraction("0.0254") ** 2)
+_add("mmHg", "pressure", "133.322387415", "millimeter of mercury", "millimeters of mercury")
+_add("torr", "pressure", Fraction(101325, 760), "Torr")
+
+# Energy (base: joule)
+_add("J", "energy", 1, "joule", "joules")
+_add("kJ", "energy", 1000, "kilojoule", "kilojoules")
+_add("MJ", "energy", 1000000, "megajoule", "megajoules")
+_add("cal", "energy", "4.184", "calorie", "calories")
+# Food "Calories" are kilocalories.
+_add("kcal", "energy", 4184, "Cal", "kilocalorie", "kilocalories")
+_add("Wh", "energy", 3600, "watt hour", "watt hours")
+_add("kWh", "energy", 3600000, "kilowatt hour", "kilowatt hours")
+_add("BTU", "energy", "1055.05585262", "Btu", "btu", "btus", "BTUs")
+_add("eV", "energy", "1.602176634e-19", "electronvolt", "electronvolts", "electron volt",
+     "electron volts")
+
 _LOWER: dict[str, Unit] = {}
 for _alias, _unit in _ALIASES.items():
     _LOWER.setdefault(_alias.lower(), _unit)

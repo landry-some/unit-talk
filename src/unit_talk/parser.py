@@ -23,7 +23,7 @@ _TOKEN_RE = re.compile(
     | -?\d+,\d+                              # decimal comma: 2,5
     | -?\d+(?:\.\d+)?(?:[eE][-+]?\d+|/\d+)?   # 10, 2.5, 1/3, 1.5e-3
     | -?\.\d+(?:[eE][-+]?\d+)?                # .5, .5e3
-    | [A-Za-z°³][A-Za-z°³/0-9'’]*            # words and symbols: km, °C, km/h, m3, what's
+    | [A-Za-z°²³][A-Za-z°²³/0-9'’]*          # words and symbols: km, °C, km/h, m², what's
     | \S                                     # anything else, one character
     """,
     re.VERBOSE,

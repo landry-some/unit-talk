@@ -4,7 +4,7 @@ Work planned after v0.1. Estimates are rough; total is about 26 hours.
 
 ## Features
 
-- [ ] Area, data size (KB/KiB), pressure and energy categories (3 h)
+- [x] Area, data size (KB/KiB), pressure and energy categories (3 h)
 - [ ] Multiple targets in one query (`to km and miles`) and mixed-unit output (`1.8 m → 5 ft 10.9 in`) (2.5 h)
 - [ ] User-defined units and aliases from a TOML config file (2 h)
 - [ ] Simple arithmetic in queries (`3 cups + 2 tbsp in ml`) (3 h)

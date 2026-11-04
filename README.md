@@ -21,10 +21,14 @@ no network access and no API keys.
 
 Python 3.11+ with only the standard library. Tests use pytest.
 
-## Supported units (v0.1)
+## Supported units
 
-Length, mass, volume (including cooking units), temperature, time and speed. Common
-abbreviations, full names and plurals all work (`ft`, `foot`, `feet`).
+Length, mass, volume (including cooking units), temperature, time, speed, area
+(`m2`, `sq ft`, `hectares`, `acres`), data size (`bit`, `B`, decimal `kB`/`MB`/`GB`/`TB`
+and binary `KiB`/`MiB`/`GiB`/`TiB`), pressure (`Pa`, `kPa`, `bar`, `atm`, `psi`,
+`mmHg`, `torr`) and energy (`J`, `kJ`, `cal`, `kcal`, `Wh`, `kWh`, `BTU`, `eV`). Common
+abbreviations, full names and plurals all work (`ft`, `foot`, `feet`). Food `Cal` (capital
+C) means kilocalories.
 
 ## Install
 

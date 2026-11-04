@@ -76,3 +76,27 @@ def test_speed():
 def test_mismatched_dimensions():
     with pytest.raises(UnitError, match="can't convert mass to length"):
         conv(1, "kg", "m")
+
+
+@pytest.mark.parametrize(
+    "name, guess",
+    [
+        ("kilometrs", "kilometres"),
+        ("galon", "gallon"),
+        ("farenheit", "fahrenheit"),
+        ("Celcius", "celsius"),
+        ("c", "°C"),
+    ],
+)
+def test_suggest_close_alias(name, guess):
+    assert units.suggest(name) == guess
+
+
+@pytest.mark.parametrize("name", ["furlongs", "parsecs", "xyz"])
+def test_suggest_nothing_when_far_off(name):
+    assert units.suggest(name) is None
+
+
+def test_unknown_unit_error_includes_suggestion():
+    with pytest.raises(UnitError, match=r"unknown unit 'milez'; did you mean 'mile'\?"):
+        get("milez")

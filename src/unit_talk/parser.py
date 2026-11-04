@@ -182,7 +182,7 @@ def _parse_unit(tokens: list[str], i: int) -> tuple[Unit, int]:
         raise ParseError("missing a unit")
     if _NUMBER_RE.fullmatch(tokens[i]):
         raise ParseError(f"expected a unit before '{tokens[i]}'")
-    raise ParseError(f"unknown unit '{tokens[i]}'")
+    raise ParseError(units.unknown_unit_message(tokens[i]))
 
 
 def _parse_quantity(tokens: list[str]) -> list[tuple[Fraction, Unit]]:

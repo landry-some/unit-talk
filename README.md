@@ -47,6 +47,9 @@ python3 -m unit_talk "1 mi to km"                # without installing the script
 Queries can use digits (`2.5`, `1/3`, `1 1/2`), words (`two`, `a quarter`,
 `two and a half`) and compound amounts (`5 ft 11 in`, `an hour and a half`).
 
+A misspelled unit gets a suggestion: `unit-talk "10 kilometrs to mi"` reports
+`unknown unit 'kilometrs'; did you mean 'kilometres'?`.
+
 Exit codes: `0` success, `1` a query couldn't be understood or converted (for piped
 input: at least one line failed), `2` bad command-line usage.
 

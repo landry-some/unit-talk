@@ -93,6 +93,13 @@ def test_parse_errors(text, message):
         parse(text)
 
 
+def test_misspelled_unit_gets_a_suggestion():
+    with pytest.raises(ParseError, match=r"unknown unit 'kilometrs'; did you mean 'kilometres'\?"):
+        parse("10 kilometrs to miles")
+    with pytest.raises(ParseError, match=r"unknown unit 'galons'; did you mean 'gallons'\?"):
+        parse("2 cups to galons")
+
+
 def test_dimension_mismatch_on_evaluate():
     with pytest.raises(UnitError, match="can't convert mass to length"):
         evaluate(parse("3 kg to m"))

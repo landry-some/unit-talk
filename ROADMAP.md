@@ -15,7 +15,7 @@ Work planned after v0.1. Estimates are rough; total is about 26 hours.
 
 - [ ] Ambiguous units: US vs imperial gallon/pint/ton, `oz` (mass) vs `fl oz` (2 h)
 - [ ] Negative temperatures, scientific notation, very large or small values, locale decimal commas (1.5 h)
-- [ ] "Did you mean…?" suggestions for misspelled units (1.5 h)
+- [x] "Did you mean…?" suggestions for misspelled units (1.5 h)
 
 ## Refactors
 

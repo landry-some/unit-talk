@@ -6,6 +6,7 @@ only temperatures use a non-zero offset.
 """
 
 from dataclasses import dataclass
+from difflib import get_close_matches
 from fractions import Fraction
 
 
@@ -119,10 +120,25 @@ def lookup(name: str) -> Unit | None:
     return None
 
 
+def suggest(name: str) -> str | None:
+    """Return the closest known alias to a misspelled unit name, if any is close."""
+    matches = get_close_matches(name.lower(), _LOWER, n=1, cutoff=0.75)
+    if not matches:
+        return None
+    # A lone "c" or "f" only works in its own case, so offer the real symbol.
+    return matches[0] if len(matches[0]) > 1 else _LOWER[matches[0]].symbol
+
+
+def unknown_unit_message(name: str) -> str:
+    guess = suggest(name)
+    hint = f"; did you mean '{guess}'?" if guess else ""
+    return f"unknown unit '{name}'{hint}"
+
+
 def get(name: str) -> Unit:
     unit = lookup(name)
     if unit is None:
-        raise UnitError(f"unknown unit '{name}'")
+        raise UnitError(unknown_unit_message(name))
     return unit
 
 

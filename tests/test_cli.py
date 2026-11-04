@@ -1,4 +1,5 @@
 import io
+import json
 from fractions import Fraction
 
 import pytest
@@ -62,3 +63,32 @@ def test_stdin_failure_sets_exit_code_but_continues(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert captured.out == "12 in\n"
     assert "can't convert length to mass" in captured.err
+
+
+def test_json_output(capsys):
+    assert main(["--json", "10 km to miles"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "query": "10 km to miles", "value": 6.2137, "unit": "mi", "text": "6.2137 mi",
+    }
+
+
+def test_json_whole_number_is_an_int(capsys):
+    assert main(["--json", "100 C to F"]) == 0
+    record = json.loads(capsys.readouterr().out)
+    assert record["value"] == 212 and isinstance(record["value"], int)
+    assert record["unit"] == "°F"
+
+
+def test_json_error_goes_to_stdout(capsys):
+    assert main(["--json", "3 kg to m"]) == 1
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == {"query": "3 kg to m", "error": "can't convert mass to length"}
+    assert captured.err == ""
+
+
+def test_json_lines_from_stdin(monkeypatch, capsys):
+    monkeypatch.setattr("sys.stdin", io.StringIO("1 ft to in\n1 ft to kg\n"))
+    assert main(["--json"]) == 1
+    lines = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert [r.get("text") for r in lines] == ["12 in", None]
+    assert "error" in lines[1]

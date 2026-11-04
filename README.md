@@ -44,6 +44,14 @@ printf '1 mi to km\n2 cups to ml\n' | unit-talk   # one query per line
 python3 -m unit_talk "1 mi to km"                # without installing the script
 ```
 
+For scripts, `--json` prints one JSON object per query (JSON Lines when reading stdin).
+Errors become `{"query": ..., "error": ...}` on stdout; the exit code still reports them.
+
+```console
+$ unit-talk --json "10 km to miles"
+{"query": "10 km to miles", "value": 6.2137, "unit": "mi", "text": "6.2137 mi"}
+```
+
 Queries can use digits (`2.5`, `1/3`, `1 1/2`), words (`two`, `a quarter`,
 `two and a half`) and compound amounts (`5 ft 11 in`, `an hour and a half`).
 

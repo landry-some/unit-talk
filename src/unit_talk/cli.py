@@ -1,6 +1,7 @@
 """Command-line entry point: ``unit-talk "10 km to miles"``."""
 
 import argparse
+import json
 import sys
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 from fractions import Fraction
@@ -22,9 +23,14 @@ def format_value(value: Fraction, precision: int) -> str:
     return "0" if text == "-0" else text
 
 
-def answer(query: str, precision: int) -> str:
+def convert_query(query: str, precision: int) -> tuple[str, str]:
+    """Return the rounded value and the target unit symbol for ``query``."""
     parsed = parse(query)
-    return f"{format_value(evaluate(parsed), precision)} {parsed.target.symbol}"
+    return format_value(evaluate(parsed), precision), parsed.target.symbol
+
+
+def answer(query: str, precision: int) -> str:
+    return " ".join(convert_query(query, precision))
 
 
 def _precision(text: str) -> int:
@@ -45,23 +51,36 @@ def _build_parser() -> argparse.ArgumentParser:
         "-p", "--precision", type=_precision, default=4, metavar="N",
         help="maximum decimal places in the result (default: 4)",
     )
+    parser.add_argument(
+        "--json", action="store_true",
+        help="print one JSON object per query (errors too) instead of plain text",
+    )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     return parser
 
 
-def _run(query: str, precision: int) -> bool:
+def _run(query: str, precision: int, as_json: bool = False) -> bool:
     try:
-        print(answer(query, precision))
-        return True
+        value, unit = convert_query(query, precision)
     except (ParseError, UnitError) as exc:
-        print(f"unit-talk: {exc}", file=sys.stderr)
+        if as_json:
+            print(json.dumps({"query": query, "error": str(exc)}, ensure_ascii=False))
+        else:
+            print(f"unit-talk: {exc}", file=sys.stderr)
         return False
+    if as_json:
+        number = float(value) if "." in value else int(value)
+        record = {"query": query, "value": number, "unit": unit, "text": f"{value} {unit}"}
+        print(json.dumps(record, ensure_ascii=False))
+    else:
+        print(f"{value} {unit}")
+    return True
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.query:
-        return 0 if _run(" ".join(args.query), args.precision) else 1
+        return 0 if _run(" ".join(args.query), args.precision, args.json) else 1
 
     interactive = sys.stdin.isatty()
     failed = False
@@ -73,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
         except KeyboardInterrupt:
             print()
             break
-        if line.strip() and not _run(line, args.precision):
+        if line.strip() and not _run(line, args.precision, args.json):
             failed = True
     if interactive:
         print()
